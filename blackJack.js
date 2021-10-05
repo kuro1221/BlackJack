@@ -56,6 +56,12 @@ class Deck {
     */
   shuffle() {
     //TODO: ここから挙動をコードしてください。
+    for (let i = this.cards.length - 1; i >= 0; i--) {
+      let rand = Tool.getRandumNumber(0, i);
+      let temp = this.cards[rand];
+      this.cards[rand] = this.cards[i];
+      this.cards[i] = temp;
+    }
   }
 
   /*
@@ -80,8 +86,17 @@ class Deck {
     */
   drawOne() {
     //TODO: code behavior here
+    return this.cards.shift();
+  }
+}
+
+class Tool {
+  static getRandumNumber(min, max) {
+    return Math.floor(Math.random() * (max + 1 - min)) + min;
   }
 }
 
 let deck = new Deck();
 deck.resetDeck();
+deck.shuffle();
+console.log(deck.drawOne());
