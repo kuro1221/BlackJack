@@ -121,6 +121,16 @@ class Player {
     */
   promptPlayer(userData) {
     //TODO: ここから挙動をコードしてください。
+    switch (this.type) {
+      case "user":
+        break;
+      case "house":
+        break;
+      case "ai":
+        break;
+      default:
+        break;
+    }
   }
 
   /*
@@ -130,6 +140,17 @@ class Player {
     */
   getHandScore() {
     //TODO: ここから挙動をコードしてください。
+    let total = 0;
+    let countA = 0;
+    for (let i = 0; i < this.hand.length; i++) {
+      total += this.hand[i];
+      if (this.hand[i].rank == "A") countA += 1;
+    }
+    while (total > 21 && countA > 0) {
+      total -= 10;
+      countA -= 1;
+    }
+    return total;
   }
 }
 
