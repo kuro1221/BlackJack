@@ -90,6 +90,70 @@ class Deck {
   }
 }
 
+class Player {
+  /*
+        String name : プレイヤーの名前
+        String type : プレイヤータイプ。{'ai', 'user', 'house'}から選択。
+        String gameType : {'blackjack'}から選択。プレイヤーの初期化方法を決定するために使用されます。
+        ?Number chips : ゲーム開始に必要なチップ。デフォルトは400。
+    */
+  constructor(name, type, gameType, chips = 400) {
+    this.name = name;
+    this.type = type;
+    this.gameType = gameType;
+    this.hand = [];
+    this.chips = chips;
+    this.bet = 0;
+
+    // 勝利金額。正の数にも負の数にもなります。
+    this.winAmount = 0;
+
+    // プレイヤーのゲームの状態やアクションを表します。
+    // ブラックジャックの場合、最初の状態は「betting」です。
+    this.gameStatus = "betting";
+  }
+
+  /*
+       ?Number userData : モデル外から渡されるパラメータ。nullになることもあります。
+       return GameDecision : 状態を考慮した上で、プレイヤーが行った決定。
+
+        このメソッドは、どのようなベットやアクションを取るべきかというプレイヤーの決定を取得します。プレイヤーのタイプ、ハンド、チップの状態を読み取り、GameDecisionを返します。パラメータにuserData使うことによって、プレイヤーが「user」の場合、このメソッドにユーザーの情報を渡すことができますし、プレイヤーが 「ai」の場合、 userDataがデフォルトとしてnullを使います。
+    */
+  promptPlayer(userData) {
+    //TODO: ここから挙動をコードしてください。
+    switch (this.type) {
+      case "user":
+        break;
+      case "house":
+        break;
+      case "ai":
+        break;
+      default:
+        break;
+    }
+  }
+
+  /*
+       return Number : 手札の合計
+
+       合計が21を超える場合、手札の各エースについて、合計が21以下になるまで10を引きます。
+    */
+  getHandScore() {
+    //TODO: ここから挙動をコードしてください。
+    let total = 0;
+    let countA = 0;
+    for (let i = 0; i < this.hand.length; i++) {
+      total += this.hand[i];
+      if (this.hand[i].rank == "A") countA += 1;
+    }
+    while (total > 21 && countA > 0) {
+      total -= 10;
+      countA -= 1;
+    }
+    return total;
+  }
+}
+
 class Tool {
   static getRandumNumber(min, max) {
     return Math.floor(Math.random() * (max + 1 - min)) + min;
