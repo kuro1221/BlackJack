@@ -97,7 +97,7 @@ class Player {
         String gameType : {'blackjack'}から選択。プレイヤーの初期化方法を決定するために使用されます。
         ?Number chips : ゲーム開始に必要なチップ。デフォルトは400。
     */
-  constructor(name, type, gameType, chips = 400) {
+  constructor(name, type, gameType, chips) {
     this.name = name;
     this.type = type;
     this.gameType = gameType;
@@ -152,6 +152,41 @@ class Player {
     }
     return total;
   }
+}
+
+class House extends Player {
+  constructor(name, type, gameType, chips) {
+    super(name, type, gameType, (chips = -1));
+  }
+
+  clearBet() {
+    this.bet = -1;
+  }
+}
+
+class User extends Player {
+  constructor(name, type, gameType, chips) {
+    super(name, type, gameType, (chips = 400));
+  }
+
+  clearBet() {
+    this.bet = 0;
+  }
+}
+
+class AI extends Player {
+  constructor(name, type, gameType, chips) {
+    super(name, type, gameType, (chips = 400));
+  }
+
+  clearBet() {
+    this.bet = 0;
+  }
+}
+
+class Game {
+  static assignPlayerHands(gameType, players) {}
+  static evaluateAndGetRoundResults() {}
 }
 
 class Tool {
@@ -219,7 +254,7 @@ class Table {
        return String : 新しいターンが始まる直前の全プレイヤーの状態を表す文字列。
         NOTE: このメソッドの出力は、各ラウンドの終了時にテーブルのresultsLogメンバを更新するために使用されます。
     */
-  blackjackEvaluateAndGetRoundResults() {
+  evaluateAndGetRoundResults() {
     //TODO: ここから挙動をコードしてください。
   }
 
@@ -227,21 +262,21 @@ class Table {
        return null : デッキから2枚のカードを手札に加えることで、全プレイヤーの状態を更新します。
        NOTE: プレイヤーのタイプが「ハウス」の場合は、別の処理を行う必要があります。
     */
-  blackjackAssignPlayerHands() {
+  assignPlayerHands() {
     //TODO: ここから挙動をコードしてください。
+    Game.assignPlayerHands(this.gameTyped, this.players);
   }
 
   /*
        return null : テーブル内のすべてのプレイヤーの状態を更新し、手札を空の配列に、ベットを0に設定します。
     */
-  blackjackClearPlayerHandsAndBets() {
+  clearPlayerHandsAndBets() {
     //TODO: ここから挙動をコードしてください。
     this.deck.resetDeck();
     this.deck.shuffle();
     for (let i = 0; i < this.players.length; i++) {
       this.players[i].hand = [];
-      if (this.players[i].type == "house") this.players.bet = -1;
-      else this.players.bet = 0;
+      this.players[i].clearBet();
     }
   }
 
