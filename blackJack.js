@@ -156,37 +156,52 @@ class Player {
 
 class House extends Player {
   constructor(name, type, gameType, chips) {
-    super(name, type, gameType, (chips = -1));
+    super(name, "house", gameType, (chips = -1));
   }
 
   clearBet() {
     this.bet = -1;
   }
+
+  promptPlayer();
 }
 
 class User extends Player {
-  constructor(name, type, gameType, chips) {
-    super(name, type, gameType, (chips = 400));
+  constructor(name, gameType, chips) {
+    super(name, "user", gameType, (chips = 400));
   }
 
   clearBet() {
     this.bet = 0;
   }
+
+  promptPlayer();
 }
 
 class AI extends Player {
   constructor(name, type, gameType, chips) {
-    super(name, type, gameType, (chips = 400));
+    super(name, "ai", gameType, (chips = 400));
   }
 
   clearBet() {
     this.bet = 0;
   }
+
+  promptPlayer();
 }
 
 class Game {
   static assignPlayerHands(gameType, players) {}
   static evaluateAndGetRoundResults() {}
+  static allPlayerActionsResolved(gameType, players) {
+    if (this.gameType == "BlackJack") {
+      if (!BlackJack.setGameStatus[players.gameStatus]) return false;
+    }
+  }
+}
+
+class BlackJack {
+  static setGameStatus = { broken: 1, bust: 1, stand: 1, surrender: 1 };
 }
 
 class Tool {
@@ -235,9 +250,10 @@ class Table {
     this.betDenominations = betDenominations;
     this.deck = new Deck(this.gameType);
     this.players = [];
-    this.house = new Player("ハウス", "house", this.gameType);
+    this.house = new House("ハウス", "house", this.gameType);
     this.gamePhase = "betting";
     this.resultsLog = [];
+    this.turnCounter = 0;
   }
   /*
         Player player : テーブルは、Player.promptPlayer()を使用してGameDecisionを取得し、GameDecisionとgameTypeに応じてPlayerの状態を更新します。
@@ -246,8 +262,9 @@ class Table {
         EX:
         プレイヤーが「ヒット」し、手札が21以上の場合、gameStatusを「バスト」に設定し、チップからベットを引きます。
     */
-  evaluateMove(Player) {
+  evaluateMove(player) {
     //TODO: ここから挙動をコードしてください。
+    player.promptPlayer();
   }
 
   /*
@@ -285,6 +302,7 @@ class Table {
     */
   getTurnPlayer() {
     //TODO: ここから挙動をコードしてください。
+    return this.players[this.turnCounter & this.players.length];
   }
 
   /*
@@ -293,6 +311,29 @@ class Table {
     */
   haveTurn(userData) {
     //TODO: ここから挙動をコードしてください。
+    let currentUser = this.getTurnPlayer();
+    if (this.gamePhase == "betting") {
+      if (this.turnCounter == 0) {
+        this.clearPlayerHandsAndBets();
+        this.assignPlayerHands();
+      }
+      this.evaluateMove(currentUser);
+      if (this.turnCounter == this.players.length - 1) {
+        this.gamePhase = "acting";
+      }
+      this.turnCounter += 1;
+    } else if (this.gamePhase == "acting") {
+      this.evaluateMove(currentUser);
+      if (this.turnCounter % this.players.length == this.players.length - 1) {
+        this.allPlayerActionsResolved();
+        this.gamePhase = "roundOver";
+      }
+      this.turnCounter += 1;
+    } else if (this.gamePhase == "roundOver") {
+      this.evaluateAndGetRoundResults();
+      this.gamePhase = "betting";
+      this.turnCounter = 0;
+    }
   }
 
   /*
@@ -300,6 +341,7 @@ class Table {
     */
   onFirstPlayer() {
     //TODO: ここから挙動をコードしてください。
+    if (this.getTurnPlayer() == this.players[0]) return true;
   }
 
   /*
@@ -307,6 +349,7 @@ class Table {
     */
   onLastPlayer() {
     //TODO: ここから挙動をコードしてください。
+    if (this.getTurnPlayer() == this.players[this.players.length - 1]) return true;
   }
 
   /*
@@ -314,10 +357,19 @@ class Table {
     */
   allPlayerActionsResolved() {
     //TODO: ここから挙動をコードしてください。
+    for (let i = 0; i < this.players.length; i++) {
+      if (!Game.allPlayerActionsResolved(this.gameType, this.players)) return false;
+    }
+    return true;
   }
 }
 
-let deck = new Deck();
-deck.resetDeck();
-deck.shuffle();
-console.log(deck.drawOne());
+let table = new Table("blackJack");
+table.players.push(table.house);
+table.players.push(new User("player1", table.gameType));
+console.log(table.players);
+table.haveTurn();
+console.log("------------------");
+console.log("手札テスト配布確認");
+
+// console.log("end");
