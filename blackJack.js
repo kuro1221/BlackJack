@@ -152,6 +152,14 @@ class Player {
     }
     return total;
   }
+
+  toStringHand() {
+    let s;
+    for (let i = 0; i < this.hand.length; i++) {
+      s += this.name + "の手札" + (i + 1) + "枚目:" + this.hand[i].suit + this.hand[i].rank + "\n";
+    }
+    return s;
+  }
 }
 
 class House extends Player {
@@ -163,7 +171,11 @@ class House extends Player {
     this.bet = -1;
   }
 
-  promptPlayer();
+  promptPlayer() {}
+
+  blackJackAssignPlayerHands(deck) {
+    this.hand.push(deck.drawOne());
+  }
 }
 
 class User extends Player {
@@ -175,7 +187,12 @@ class User extends Player {
     this.bet = 0;
   }
 
-  promptPlayer();
+  blackJackAssignPlayerHands(deck) {
+    this.hand.push(deck.drawOne());
+    this.hand.push(deck.drawOne());
+  }
+
+  promptPlayer() {}
 }
 
 class AI extends Player {
@@ -187,14 +204,25 @@ class AI extends Player {
     this.bet = 0;
   }
 
-  promptPlayer();
+  promptPlayer() {}
+
+  blackJackAssignPlayerHands(deck) {
+    this.hand.push(deck.drawOne());
+    this.hand.push(deck.drawOne());
+  }
 }
 
 class Game {
-  static assignPlayerHands(gameType, players) {}
+  static assignPlayerHands(gameType, players, deck) {
+    if (gameType == "BlackJack") {
+      for (let i = 0; i < players.length; i++) {
+        players[i].blackJackAssignPlayerHands(deck);
+      }
+    }
+  }
   static evaluateAndGetRoundResults() {}
   static allPlayerActionsResolved(gameType, players) {
-    if (this.gameType == "BlackJack") {
+    if (gameType == "BlackJack") {
       if (!BlackJack.setGameStatus[players.gameStatus]) return false;
     }
   }
@@ -281,7 +309,7 @@ class Table {
     */
   assignPlayerHands() {
     //TODO: ここから挙動をコードしてください。
-    Game.assignPlayerHands(this.gameTyped, this.players);
+    Game.assignPlayerHands(this.gameType, this.players, this.deck);
   }
 
   /*
@@ -364,12 +392,17 @@ class Table {
   }
 }
 
-let table = new Table("blackJack");
-table.players.push(table.house);
-table.players.push(new User("player1", table.gameType));
-console.log(table.players);
-table.haveTurn();
-console.log("------------------");
-console.log("手札テスト配布確認");
+class Log {
+  static outputPlayerHand() {
+    let table = new Table("BlackJack");
+    table.players.push(table.house);
+    table.players.push(new User("player1", table.gameType));
+    table.haveTurn();
+    console.log("------------------");
+    console.log("手札テスト配布確認");
+    console.log(table.players[0].toStringHand());
+    console.log(table.players[1].toStringHand());
+  }
+}
 
-// console.log("end");
+Log.outputPlayerHand();
