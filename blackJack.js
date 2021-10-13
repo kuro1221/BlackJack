@@ -118,20 +118,20 @@ class Player {
        return GameDecision : 状態を考慮した上で、プレイヤーが行った決定。
 
         このメソッドは、どのようなベットやアクションを取るべきかというプレイヤーの決定を取得します。プレイヤーのタイプ、ハンド、チップの状態を読み取り、GameDecisionを返します。パラメータにuserData使うことによって、プレイヤーが「user」の場合、このメソッドにユーザーの情報を渡すことができますし、プレイヤーが 「ai」の場合、 userDataがデフォルトとしてnullを使います。
-    */
-  promptPlayer(userData) {
-    //TODO: ここから挙動をコードしてください。
-    switch (this.type) {
-      case "user":
-        break;
-      case "house":
-        break;
-      case "ai":
-        break;
-      default:
-        break;
-    }
-  }
+  //   */
+  // promptPlayer(userData) {
+  //   //TODO: ここから挙動をコードしてください。
+  //   switch (this.type) {
+  //     case "user":
+  //       break;
+  //     case "house":
+  //       break;
+  //     case "ai":
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // }
 
   /*
        return Number : 手札の合計
@@ -160,6 +160,10 @@ class Player {
     }
     return s;
   }
+
+  toStringBet() {
+    return this.name + "のbet:" + this.bet + "$\n";
+  }
 }
 
 class House extends Player {
@@ -171,7 +175,11 @@ class House extends Player {
     this.bet = -1;
   }
 
-  promptPlayer() {}
+  blackJackPromptPlayer() {
+    if (this.gameStatus == "betting") {
+      this.gameStatus = "playing";
+    }
+  }
 
   blackJackAssignPlayerHands(deck) {
     this.hand.push(deck.drawOne());
@@ -192,7 +200,12 @@ class User extends Player {
     this.hand.push(deck.drawOne());
   }
 
-  promptPlayer() {}
+  blackJackPromptPlayer() {
+    if (this.gameStatus == "betting") {
+      this.bet = 200;
+      this.gameStatus = "playing";
+    }
+  }
 }
 
 class AI extends Player {
@@ -204,7 +217,12 @@ class AI extends Player {
     this.bet = 0;
   }
 
-  promptPlayer() {}
+  blackJackPromptPlayer() {
+    if (this.gameStatus == "betting") {
+      this.bet = 200;
+      this.gameStatus = "playing";
+    }
+  }
 
   blackJackAssignPlayerHands(deck) {
     this.hand.push(deck.drawOne());
@@ -220,6 +238,13 @@ class Game {
       }
     }
   }
+
+  static promptPlayer(gameType, player) {
+    if (gameType == "BlackJack") {
+      player.blackJackPromptPlayer();
+    }
+  }
+
   static evaluateAndGetRoundResults() {}
   static allPlayerActionsResolved(gameType, players) {
     if (gameType == "BlackJack") {
@@ -292,7 +317,7 @@ class Table {
     */
   evaluateMove(player) {
     //TODO: ここから挙動をコードしてください。
-    player.promptPlayer();
+    Game.promptPlayer(this.gameType, player);
   }
 
   /*
@@ -393,16 +418,26 @@ class Table {
 }
 
 class Log {
-  static outputPlayerHand() {
+  static outputLog() {
     let table = new Table("BlackJack");
     table.players.push(table.house);
     table.players.push(new User("player1", table.gameType));
+    table.players.push(new AI("AI1", table.gameType));
     table.haveTurn();
+    table.haveTurn();
+    table.haveTurn();
+
     console.log("------------------");
     console.log("手札テスト配布確認");
     console.log(table.players[0].toStringHand());
     console.log(table.players[1].toStringHand());
+    console.log(table.players[2].toStringHand());
+    console.log("------------------");
+    console.log("ベット数確認");
+    console.log(table.players[0].toStringBet());
+    console.log(table.players[1].toStringBet());
+    console.log(table.players[2].toStringBet());
   }
 }
 
-Log.outputPlayerHand();
+Log.outputLog();
