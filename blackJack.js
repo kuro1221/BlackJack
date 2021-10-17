@@ -114,26 +114,6 @@ class Player {
   }
 
   /*
-       ?Number userData : モデル外から渡されるパラメータ。nullになることもあります。
-       return GameDecision : 状態を考慮した上で、プレイヤーが行った決定。
-
-        このメソッドは、どのようなベットやアクションを取るべきかというプレイヤーの決定を取得します。プレイヤーのタイプ、ハンド、チップの状態を読み取り、GameDecisionを返します。パラメータにuserData使うことによって、プレイヤーが「user」の場合、このメソッドにユーザーの情報を渡すことができますし、プレイヤーが 「ai」の場合、 userDataがデフォルトとしてnullを使います。
-  //   */
-  // promptPlayer(userData) {
-  //   //TODO: ここから挙動をコードしてください。
-  //   switch (this.type) {
-  //     case "user":
-  //       break;
-  //     case "house":
-  //       break;
-  //     case "ai":
-  //       break;
-  //     default:
-  //       break;
-  //   }
-  // }
-
-  /*
        return Number : 手札の合計
 
        合計が21を超える場合、手札の各エースについて、合計が21以下になるまで10を引きます。
@@ -143,7 +123,7 @@ class Player {
     let total = 0;
     let countA = 0;
     for (let i = 0; i < this.hand.length; i++) {
-      total += this.hand[i];
+      total += this.hand[i].getRankNumber();
       if (this.hand[i].rank == "A") countA += 1;
     }
     while (total > 21 && countA > 0) {
@@ -216,27 +196,6 @@ class User extends Player {
     this.hand.push(deck.drawOne());
   }
 
-  // blackJackPromptPlayer(deck) {
-  //   if (this.gameStatus == "betting") {
-  //     this.bet = 200;
-  //     this.gameStatus = "playing";
-  //   } else if (this.gameStatus == "playing") {
-  //     selectDecision = new GameDecision("stand", 1); //ボタン入力より取得
-  //     if (selectDecision.action == "surrender") {
-  //       this.gameStatus = "surrender";
-  //     } else if ((selectDecision.action = "stand")) {
-  //       this.gameStatus = "stand";
-  //     } else if (selectDecision.action == "hit") {
-  //       this.hand.push(deck.drawOne);
-  //       if (this.getHandScore() > 21) this.gameStatus = "bust";
-  //     } else if (selectDecision.action == "double") {
-  //       this.hand.push(deck.drawOne);
-  //       this.bet *= 2;
-  //       if (this.getHandScore() > 21) this.gameStatus = "bust";
-  //     }
-  //   }
-  // }
-
   blackJackPromptPlayer(table) {
     if (table.gamePhase == "betting") {
       let betMoney = 100; //入力値を入れる
@@ -300,7 +259,9 @@ class Game {
     if (table.gameType == "BlackJack") BlackJack.evaluateMove(player, table);
   }
 
-  static evaluateAndGetRoundResults() {}
+  static evaluateAndGetRoundResults(table) {
+    if (table.gameType == "BlackJack") BlackJack.evaluateAndGetRoundResults(table);
+  }
 
   static allPlayerActionsResolved(table) {
     if (table.gameType == "BlackJack") {
@@ -340,6 +301,71 @@ class BlackJack {
           if (player.getHandScore() > 21) player.gameStatus = "bust";
           break;
       }
+    }
+  }
+
+  static evaluateAndGetRoundResults(table) {
+    let house = table.players[0];
+    BlackJack.evaluatePhaseHouseDrow(house, table);
+    BlackJack.evaluateBlackJack(table);
+    BlackJack.evaluateBet(house, table);
+  }
+
+  static evaluatePhaseHouseDrow(house, table) {
+    while (house.getHandScore() < 17) {
+      house.hand.push(table.deck.drawOne());
+    }
+    if (house.getHandScore() > 21) house.gameStatus = "bust";
+  }
+
+  static evaluateBlackJack(table) {
+    for (let i = 0; i < table.players.length; i++) {
+      //手札が2枚で合計値が21ならBlackJack
+      if (table.players[i].length == 2 && table.players[i].getHandScore() == 21) {
+        table.players[i].gameStatus = "BlackJack";
+      }
+    }
+  }
+
+  static evaluateBet(house, table) {
+    let result;
+    let getChips = 0;
+    for (let i = 1; i < table.players.length; i++) {
+      let player = table.players[i];
+      if (player.gameStatus == "surrender") {
+        result = "surrender";
+      } else {
+        if (house.gameStatus == "BlackJack") {
+          if (player.gameStatus == "BlackJack") result = "push";
+          else {
+            result = "lost";
+            getChips = -player.chips;
+          }
+        } else if (house.gameStatus == "bust") {
+          if (player.gameStatus == "BlackJack") {
+            result = "win";
+            getChips = player.bet * 1.5;
+          } else if (player.gameStatus == "bust") result = "lpush";
+          else {
+            result = "lost";
+            getChips = -player.chips;
+          }
+        } else {
+          if (player.getHandScore() > house.getHandScore()) {
+            result = "win";
+            getChips = player.bet;
+          } else if (player.getHandScore() < house.getHandScore()) {
+            result = "lost";
+            getChips = -player.bet;
+          } else {
+            result = "push";
+          }
+        }
+      }
+      player.chips += getChips;
+      Log.outputEvaluateBlackJackLog(player, result, getChips);
+      getChips = 0;
+      result = "";
     }
   }
 }
@@ -397,14 +423,6 @@ class Table {
   }
 
   /*
-       return String : 新しいターンが始まる直前の全プレイヤーの状態を表す文字列。
-        NOTE: このメソッドの出力は、各ラウンドの終了時にテーブルのresultsLogメンバを更新するために使用されます。
-    */
-  evaluateAndGetRoundResults() {
-    //TODO: ここから挙動をコードしてください。
-  }
-
-  /*
        return null : デッキから2枚のカードを手札に加えることで、全プレイヤーの状態を更新します。
        NOTE: プレイヤーのタイプが「ハウス」の場合は、別の処理を行う必要があります。
     */
@@ -457,12 +475,12 @@ class Table {
       Game.evaluateMove(currentUser, this);
       if (this.turnCounter % this.players.length == this.players.length - 1) {
         //全プレイヤーがセットされている場合、roundOverフェーズに移行
-        if (Game.allPlayerActionsResolved(this)) this.gamePhase = "roundOver";
+        if (Game.allPlayerActionsResolved(this)) this.gamePhase = "evaluatingWinners";
       }
       this.turnCounter += 1;
       //評価フェーズ
-    } else if (this.gamePhase == "roundOver") {
-      Game.evaluateAndGetRoundResults();
+    } else if (this.gamePhase == "evaluatingWinners") {
+      Game.evaluateAndGetRoundResults(this);
       this.gamePhase = "betting";
       this.turnCounter = 0;
     }
@@ -527,6 +545,15 @@ class Log {
     console.log(table.players[0].toStringStatus());
     console.log(table.players[1].toStringStatus());
     console.log(table.players[2].toStringStatus());
+    table.haveTurn();
+    console.log("ラウンド終了");
+  }
+
+  static outputEvaluateBlackJackLog(player, result, getChips) {
+    let s;
+    s = player.name + "result:" + result + " chips:$" + getChips + "\n";
+    console.log(s);
+    // return;
   }
 }
 
